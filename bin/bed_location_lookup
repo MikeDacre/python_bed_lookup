@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# vim:fenc=utf-8 tabstop=4 expandtab shiftwidth=4 softtabstop=4
+"""
+#============================================================================#
+#                                                                            #
+#          FILE: bed_location_lookup                                         #
+#        AUTHOR: Michael D Dacre, mike.dacre@gmail.com                       #
+#  ORGANIZATION: Stanford University                                         #
+#       LICENSE: MIT License, property of Stanford, use as you wish          #
+#       VERSION: 0.1                                                         #
+#       CREATED: 2015-12-15 08:41                                            #
+# Last modified: 2015-12-15 09:38                                            #
+#                                                                            #
+#   DESCRIPTION: Lookup gene or snp identifiers from a bed file using genome #
+#                coordinates. Provide a space separated list of coordinates  #
+#                to lookup, each coordinate should have the chromosome name  #
+#                and the location _ separated. It is more efficient to run   #
+#                this script with a list of coordinates than it is to call   #
+#                it multiple times.                                          #
+#                Returns a newline separated list of gene names              #
+#                                                                            #
+#         USAGE: bed_location_lookup chr3_10001031 chr1_2384312 chrX,24163   #
+#                                                                            #
+#============================================================================#
+"""
+from bed_lookup import BedFile
+from os import path
+import sys
+
+
+def main(bedfile, locations, outfile='', dictionary=False):
+    """ Run everything """
+    if path.isfile(bedfile):
+        b = BedFile(bedfile)
+    else:
+        sys.stderr.write('\nERROR --> ' + bedfile + ' path is not correct, ' +
+                         'please correct and try again.\n')
+        sys.exit(1)
+
+    # Open the outpyt file for writing
+    outfile = open(outfile, 'w') if outfile else sys.stdout
+
+    # Recurse through the location list
+    for loc in locations:
+        try:
+            c, l = loc.split('_')
+        except ValueError:
+            sys.stderr.write('\nERROR --> ' + loc + ' is not properly formatted. ' +
+                             'It needs to be a chromosome name and a location ' +
+                             'separated by an underscore.\n')
+            sys.exit(2)
+
+        # Print the output
+        result = b.lookup(c, l)
+        if dictionary:
+            outfile.write(loc + ': ' + result + '\n')
+        else:
+            outfile.write(result + '\n')
+
+
+if __name__ == '__main__' and '__file__' in globals():
+    """ Command Line Argument Parsing """
+    import argparse
+
+    f_class = argparse.RawDescriptionHelpFormatter
+    parser  = argparse.ArgumentParser(description=__doc__,
+                                      formatter_class=f_class)
+
+    # Bed File
+    parser.add_argument('bed_file', help="Path to the bed file to query")
+
+    # Locations
+    parser.add_argument('locations', nargs='+',
+                        help="A space separated list of locations to lookup. " +
+                             "Separate chromosome name and location by _ " +
+                             "e.g. chr3_1000132 chd4_1428675")
+
+    # Optional Files
+    parser.add_argument('-o', '--outfile', default='',
+                        help="Output file, Default STDOUT")
+
+    # Choice to return as dictionary
+    parser.add_argument('-d', '--dictionary', action='store_true',
+                        help="Output as a dictionary, e.g. chr1_1000103: rs47, " +
+                             "the default is to output as just rs47")
+
+    args = parser.parse_args()
+
+    # Run the script
+    main(args.bed_file, args.locations, args.outfile, args.dictionary)
+
+##
+# The End #

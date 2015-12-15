@@ -45,6 +45,7 @@ setup(
 
     install_requires=['cython'],
     ext_modules=cythonize("bed_lookup/*.pyx"),
+    scripts=['bin/bed_location_lookup'],
     packages=['bed_lookup']
 
 )
