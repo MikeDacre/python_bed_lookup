@@ -23,6 +23,7 @@ class BedFile():
         elif self._type == 'dt':
             return self._lookup_dict(chromosome, location)
 
+    # Private functions
     def _lookup_sqlite(self, chromosome, location):
         """ Simple sqlite query """
         expr = "SELECT name FROM '" + chromosome + "' INDEXED BY '" + \
@@ -70,7 +71,6 @@ class BedFile():
                              "' is not in the lookup table, lookup failed.\n")
             return ''
 
-    # Private functions
     def _init_sqlite(self, bedfile):
         """ Initialize sqlite3 object """
         sys.stderr.write('INFO --> Bedfile is large, using sqlite\n')
