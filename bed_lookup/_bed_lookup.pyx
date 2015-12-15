@@ -10,7 +10,7 @@ import sqlite3
 from subprocess import check_output as sub
 
 # Define max length to use dictionary
-_max_len = 500000  # 500,000 is a reasonable default
+_max_len = 1000000  # 1,000,000 is a reasonable default
 
 
 class BedFile():
@@ -43,7 +43,7 @@ class BedFile():
         if answer:
             return answer[0]
         else:
-            sys.stderr.write("\nWARNING --> Location '" + location +
+            sys.stderr.write("\nWARNING --> Location '" + str(location) +
                              "' on Chromosome '" + chromosome +
                              "' is not in the lookup table, lookup failed.\n")
             return ''
@@ -55,7 +55,7 @@ class BedFile():
         loc = int(location)
         try:
             for k, v in self._dict[chromosome].items():
-                if v[0] < loc < v[1]:
+                if v[0] <= loc < v[1]:
                     answer = k
                     break
         except KeyError:
@@ -66,7 +66,7 @@ class BedFile():
         if answer:
             return answer
         else:
-            sys.stderr.write("\nWARNING --> Location '" + location +
+            sys.stderr.write("\nWARNING --> Location '" + str(location) +
                              "' on Chromosome '" + chromosome +
                              "' is not in the lookup table, lookup failed.\n")
             return ''
