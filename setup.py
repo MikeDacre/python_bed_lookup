@@ -25,11 +25,10 @@ setup(
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         'Development Status :: 3 - Beta',
+        'Intended Audience :: Science/Research',
         'Environment :: Console',
         'Operating System :: Linux',
         'Natural Language :: English',
-        'Topic :: System :: Clustering',
-        'Topic :: System :: Monitoring',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'License :: OSI Approved :: MIT License',
@@ -39,10 +38,12 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ],
 
     keywords='bed',
 
+    install_requires=['cython'],
     ext_modules=cythonize("bed_lookup/*.pyx"),
     packages=['bed_lookup']
 
