@@ -13,3 +13,8 @@ For example::
 
 This module requires cython, and should work with recent versions of
 python2 and python3, although python3 will be faster.
+
+It makes use of a cython optimized dictionary lookup for small bed files
+and sqlite for larger bed files. Which backend is being used is transparent
+to the user, simply use the ``lookup()`` function as demonstrated in the
+example above.
