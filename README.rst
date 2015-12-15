@@ -5,7 +5,7 @@ Python Bed Lookup
 A simple data structure to hold a bed file, allows the user to
 search by location for a gene name.
 
-For example:
+For example::
 
     from bed_lookup import BedFile
     b = BedFile('my_bed.bed')
