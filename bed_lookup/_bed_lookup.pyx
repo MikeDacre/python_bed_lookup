@@ -6,6 +6,7 @@ Lookup method is transparent to the user
 """
 import sys
 import os
+import sqlite3
 from subprocess import check_output as sub
 
 # Define max length to use dictionary
@@ -27,27 +28,51 @@ class BedFile():
         expr = "SELECT name FROM '" + chromosome + "' INDEXED BY '" + \
                chromosome + "_start_end' " + "WHERE " + location + \
                " BETWEEN start AND end"
-        self._c.execute(expr)
-        return self._c.fetchone()[0]
+        try:
+            self._c.execute(expr)
+        except sqlite3.OperationalError as e:
+            if str(e).startswith('no such table'):
+                sys.stderr.write("\nWARNING --> Chromosome '" + chromosome +
+                                 "' is not in the lookup table, lookup failed.\n")
+                return ''
+            else:
+                raise(e)
+
+        answer = self._c.fetchone()
+        if answer:
+            return answer[0]
+        else:
+            sys.stderr.write("\nWARNING --> Location '" + location +
+                             "' on Chromosome '" + chromosome +
+                             "' is not in the lookup table, lookup failed.\n")
+            return ''
 
     def _lookup_dict(self, chromosome, location):
         """ Simple dictionary query with cython for math """
         answer = ''
         cdef int loc
         loc = int(location)
-        for k, v in self._dict[chromosome].items():
-            if v[0] < loc < v[1]:
-                answer = k
-                break
+        try:
+            for k, v in self._dict[chromosome].items():
+                if v[0] < loc < v[1]:
+                    answer = k
+                    break
+        except KeyError:
+            sys.stderr.write("\nWARNING --> Chromosome '" + chromosome +
+                             "' is not in the lookup table, lookup failed.\n")
+            return ''
+
         if answer:
             return answer
         else:
-            return None
+            sys.stderr.write("\nWARNING --> Location '" + location +
+                             "' on Chromosome '" + chromosome +
+                             "' is not in the lookup table, lookup failed.\n")
+            return ''
 
     # Private functions
     def _init_sqlite(self, bedfile):
         """ Initialize sqlite3 object """
-        import sqlite3
         sys.stderr.write('INFO --> Bedfile is large, using sqlite\n')
         db_name = bedfile + '.db'
         if os.path.exists(db_name):
