@@ -55,6 +55,7 @@ cdef class Chrom(list):
         cdef long i = int(loc)
         for gene in self:
             if gene.find(i):
+                # Handle python 2/3 strings
                 return gene.name.decode()
         return None
 
@@ -124,10 +125,22 @@ class BedFile():
         """ Initialize sqlite3 object """
         sys.stderr.write('INFO --> Bedfile is large, using sqlite\n')
         db_name = bedfile + '.db'
-        if bedfile.endswith('.gz'):
-            alt_path = '.'.join(bedfile.split('.')[:-1]) + '.db'
+        # Check if the alternate db exists if db doesn't exist
+        if not os.path.exists(db_name):
+            if bedfile.endswith('.gz'):
+                alt_path = '.'.join(bedfile.split('.')[:-1]) + '.db'
+            else:
+                alt_path = bedfile + '.gz' + '.db'
+            if os.path.exists(alt_path):
+                db_name = alt_path
+                exists = True
+            else:
+                exits = False
+        else:
+            exists = True
 
-        if os.path.exists(db_name):
+        # If the database already exists, use it
+        if exists:
             sys.stderr.write('INFO --> Using existing db, if this is ' +
                              'not what you want, delete ' + db_name + '\n')
             self._conn = sqlite3.connect(db_name)
