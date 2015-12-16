@@ -6,13 +6,13 @@
 #  ORGANIZATION: Stanford University                                         #
 #       LICENSE: MIT License, property of Stanford, use as you wish          #
 #       CREATED: 2015-12-13 17:38                                            #
-# Last modified: 2015-12-15 17:42                                            #
+# Last modified: 2015-12-16 14:51                                            #
 #                                                                            #
 #============================================================================#
 """
 
 # Define max length to use dictionary
-_max_len = 5000000  # 1,000,000 is a reasonable default
+_max_len = 1500000  # 1,000,000 is a reasonable default
 
 __all__ = ["_bed_lookup"]
 from ._bed_lookup import BedFile
