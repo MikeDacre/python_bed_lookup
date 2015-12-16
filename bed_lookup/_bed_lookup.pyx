@@ -13,20 +13,31 @@ from libcpp.string cimport string
 from . import _max_len
 
 
+cdef large_file(infile):
+    """ Check if file is greater than _max_len """
+    cdef int len = 0
+    with open(infile) as f:
+        for line in f:
+            len = len + 1
+            if len > _max_len:
+                return True
+        return False
+
+
 cdef class Gene(object):
     cdef long start, end
     cdef public string name
 
     def __init__(self, values):
         self.start = int(values[1])
-        self.end   = int(values[2])
-        self.name  = values[3].encode()
+        self.end = int(values[2])
+        self.name = values[3].encode()
 
     def find(self, i):
         return self.start <= i < self.end
 
     def __repr__(self):
-        return "{0}({1}:{2})".format(self.name.decode(), self.start, self.end)
+        return "{}({}:{})".format(self.name, self.start, self.end)
 
 
 cdef class Chrom(list):
@@ -38,8 +49,7 @@ cdef class Chrom(list):
         for gene in self:
             if gene.find(i):
                 return gene.name.decode()
-            else:
-                return ''
+        return None
 
     def __repr__(self):
         astr = []
@@ -61,13 +71,16 @@ class BedFile():
     # Private functions
     def _lookup_sqlite(self, chromosome, location):
         """ Simple sqlite query """
-        expr = "SELECT name FROM '" + chromosome + "' INDEXED BY '" + \
-               chromosome + "_start_end' " + "WHERE " + location + \
-               " BETWEEN start AND end"
+        expr = ("SELECT name FROM '{0}' INDEXED BY '{0}_start_end' " +
+                "WHERE {1} BETWEEN start AND end").format(chromosome, location)
+
         try:
             self._c.execute(expr)
         except sqlite3.OperationalError as e:
             if str(e).startswith('no such table'):
+                sys.stderr.write(("WARNING --> Chromosome '{}' is not in " +
+                                  "the lookup table, lookup failed." +
+                                  "\n").format(chromosome))
                 return ''
             else:
                 raise(e)
@@ -76,14 +89,29 @@ class BedFile():
         if answer:
             return answer[0]
         else:
+            sys.stderr.write(("WARNING --> Location '{}' on Chromosome '{}' " +
+                              "is not in the lookup table, lookup failed." +
+                              "\n").format(location, chromosome))
             return ''
 
     def _lookup_dict(self, chromosome, location):
         """ Simple dictionary query with cython for math """
-        answer = ''
         cdef int loc
         loc = int(location)
-        return self._data[chromosome].find(location)
+        if chromosome in self._data:
+            ans = self._data[chromosome].find(location)
+            if ans:
+                return ans
+            else:
+                sys.stderr.write(("WARNING --> Location '{}' on Chromosome '{}' " +
+                                  "is not in the lookup table, lookup failed." +
+                                  "\n").format(location, chromosome))
+                return ''
+        else:
+            sys.stderr.write(("WARNING --> Chromosome '{}' is not in " +
+                              "the lookup table, lookup failed." +
+                              "\n").format(chromosome))
+            return ''
 
     def _init_sqlite(self, bedfile):
         """ Initialize sqlite3 object """
@@ -108,17 +136,23 @@ class BedFile():
                 if len(f) < 4:
                     continue
                 # Check if db exists and create if it does
-                self._c.execute("SELECT * FROM sqlite_master WHERE name ='" + f[0] + "' and type='table';")
+                expr = ("SELECT * FROM sqlite_master WHERE name = '{}' " +
+                        "and type='table';").format(f[0])
+                self._c.execute(expr)
                 if not self._c.fetchall():
-                    exp = "CREATE TABLE '" + f[0] + "' (name text, start int, end int);"
+                    exp = ("CREATE TABLE '{}' (name text, start int, " +
+                           "end int);").format(f[0])
                     self._c.execute(exp)
                     self._conn.commit()
-                self._c.execute("INSERT INTO '" + f[0] + "' VALUES ('" + f[3] + "','" + f[1] + "','" + f[2] + "')")
+                expr = ("INSERT INTO '{}' VALUES " +
+                        "('{}','{}','{}')").format(f[0], f[3], f[1], f[2])
+                self._c.execute(expr)
             self._conn.commit()
             # Create indicies
             self._c.execute('''SELECT name FROM sqlite_master WHERE type='table';''')
             for i in self._c.fetchall():
-                exp = "CREATE INDEX '" + i[0] + "_start_end' ON '" + i[0] + "' (start, end) "
+                exp = ("CREATE INDEX '{0}_start_end' ON '{0}' " +
+                       "(start, end)").format(i[0])
                 self._c.execute(exp)
                 self._conn.commit()
 
@@ -134,7 +168,7 @@ class BedFile():
                 self._data[chr].add(gene)
 
     def __init__(self, bedfile):
-        if int(sub(['wc', '-l', bedfile]).decode().split(' ')[0]) > _max_len:
+        if large_file(bedfile):
             # Use sqlite for files greater than max len
             self._type = 'sq'
             self._init_sqlite(bedfile)
