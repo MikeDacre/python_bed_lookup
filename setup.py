@@ -44,7 +44,7 @@ setup(
     keywords='bed',
 
     install_requires=['cython'],
-    ext_modules=cythonize("bed_lookup/*.pyx"),
+    ext_modules=cythonize("bed_lookup/*.pyx", language='c++'),
     scripts=['bin/bed_location_lookup'],
     packages=['bed_lookup']
 

@@ -8,9 +8,44 @@ import sys
 import os
 import sqlite3
 from subprocess import check_output as sub
+from collections import defaultdict
+from libcpp.string cimport string
+from . import _max_len
 
-# Define max length to use dictionary
-_max_len = 1000000  # 1,000,000 is a reasonable default
+
+cdef class Gene(object):
+    cdef long start, end
+    cdef public string name
+
+    def __init__(self, values):
+        self.start = int(values[1])
+        self.end   = int(values[2])
+        self.name  = values[3].encode()
+
+    def find(self, i):
+        return self.start <= i < self.end
+
+    def __repr__(self):
+        return "{0}({1}:{2})".format(self.name.decode(), self.start, self.end)
+
+
+cdef class Chrom(list):
+    def add(self, aGene):
+        self.append(aGene)
+
+    def find(self, loc):
+        cdef long i = int(loc)
+        for gene in self:
+            if gene.find(i):
+                return gene.name.decode()
+            else:
+                return ''
+
+    def __repr__(self):
+        astr = []
+        for gene in self:
+            astr += [repr(gene)]
+        return '; '.join(astr)
 
 
 class BedFile():
@@ -33,8 +68,6 @@ class BedFile():
             self._c.execute(expr)
         except sqlite3.OperationalError as e:
             if str(e).startswith('no such table'):
-                sys.stderr.write("\nWARNING --> Chromosome '" + chromosome +
-                                 "' is not in the lookup table, lookup failed.\n")
                 return ''
             else:
                 raise(e)
@@ -43,9 +76,6 @@ class BedFile():
         if answer:
             return answer[0]
         else:
-            sys.stderr.write("\nWARNING --> Location '" + str(location) +
-                             "' on Chromosome '" + chromosome +
-                             "' is not in the lookup table, lookup failed.\n")
             return ''
 
     def _lookup_dict(self, chromosome, location):
@@ -53,23 +83,7 @@ class BedFile():
         answer = ''
         cdef int loc
         loc = int(location)
-        try:
-            for k, v in self._dict[chromosome].items():
-                if v[0] <= loc < v[1]:
-                    answer = k
-                    break
-        except KeyError:
-            sys.stderr.write("\nWARNING --> Chromosome '" + chromosome +
-                             "' is not in the lookup table, lookup failed.\n")
-            return ''
-
-        if answer:
-            return answer
-        else:
-            sys.stderr.write("\nWARNING --> Location '" + str(location) +
-                             "' on Chromosome '" + chromosome +
-                             "' is not in the lookup table, lookup failed.\n")
-            return ''
+        return self._data[chromosome].find(location)
 
     def _init_sqlite(self, bedfile):
         """ Initialize sqlite3 object """
@@ -109,20 +123,15 @@ class BedFile():
                 self._conn.commit()
 
     def _init_dict(self, bedfile):
-        self._dict = {}
-        cdef int start, end
+        self._data = defaultdict(Chrom)
         with open(bedfile) as infile:
             for line in infile:
                 f = line.rstrip().split('\t')
                 if len(f) < 4:
                     continue
                 chr   = f[0]
-                start = int(f[1])
-                end   = int(f[2])
-                gene  = f[3]
-                if chr not in self._dict:
-                    self._dict[chr] = {}
-                self._dict[chr][gene] = (start, end)
+                gene  = Gene(f)
+                self._data[chr].add(gene)
 
     def __init__(self, bedfile):
         if int(sub(['wc', '-l', bedfile]).decode().split(' ')[0]) > _max_len:
