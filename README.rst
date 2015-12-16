@@ -35,13 +35,13 @@ Running from the command line
 
 There is a command line script called ``bed_location_lookup`` that will be installed
 in ``/usr/bin`` if you install globally or in ``~/.local/usr/bin`` if you install for
-your user only. The sytax for that script is:: 
+your user only. The sytax for that script is::
 
     bed_location_lookup <bed_file> chr1_1000134 chr2_1859323 ....
-    
+
 It will work for any number of gene coordinate arguments. Be aware, that there is a
 file opening delay when the script is run (for small bed files this will be very
-small, but for large files it can be a few seconds). It is therefore much more 
+small, but for large files it can be a few seconds). It is therefore much more
 efficient to call a single instance of ``bed_location_lookup`` with a long list of
 coordinates than it is to call it once per coordinate. For a large number of
 coordinates this difference can be substantial.
@@ -49,6 +49,11 @@ coordinates this difference can be substantial.
 ``bed_location_lookup`` has a few other options also, to get those run::
 
     bed_location_lookup -h
+
+Note: if you know the bed file is large and a database already exists, you can
+get considerable speed up by passing the database file instead of the raw bed
+file. e.g. pass ``bedfile.bed.db`` instead of ``bedfile.bed``. This bypasses the
+file length check.
 
 *************************************
 Backend information and customization
@@ -61,13 +66,17 @@ example above. The default file size cutoff is 5 million lines in the bed
 file, which results in a memory use of 1.2GB for a 5 million line long file.
 The memory use scales linearly, so setting the limit at 1 million lines will
 result in about 240MB of memory use. To change the file size cutoff edit the
-`_max_len` variable in `bed_lookup/__init__.py`.
+``_max_len`` variable in ``bed_lookup/__init__.py``.
 
 Note that the sqlite backed is very slightly slower for lookups, however the
 sqlite backend requires that a database exists already. If one does not exist
 (the expected name is the bed file name followed by a ``.db``) already then one
 is created, and this step can be very slow. Hypothetically this should only be
 done once.
+
+As noted above, when creating a BedFile object, a file length lookup is performed.
+This lookup can be costly, particularly for gzipped files. To skip this step,
+simply pass the database file to BedFile(), instead of the bedfile itself.
 
 Note: this code will work with either plain text or gzipped files, gzipped files
 will be slightly slower at load due to the overhead of decompression. For large

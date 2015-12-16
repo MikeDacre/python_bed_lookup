@@ -124,7 +124,7 @@ class BedFile():
     def _init_sqlite(self, bedfile):
         """ Initialize sqlite3 object """
         sys.stderr.write('INFO --> Bedfile is large, using sqlite\n')
-        db_name = bedfile + '.db'
+        db_name = bedfile if bedfile.endswith('.db') else bedfile + '.db'
         # Check if the alternate db exists if db doesn't exist
         if not os.path.exists(db_name):
             if bedfile.endswith('.gz'):
@@ -191,7 +191,7 @@ class BedFile():
                 self._data[chr].add(gene)
 
     def __init__(self, bedfile):
-        if large_file(bedfile):
+        if bedfile.endswith('.db') or large_file(bedfile):
             # Use sqlite for files greater than max len
             self._type = 'sq'
             self._init_sqlite(bedfile)
