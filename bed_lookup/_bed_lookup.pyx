@@ -7,16 +7,23 @@ Lookup method is transparent to the user
 import sys
 import os
 import sqlite3
+import gzip
 from subprocess import check_output as sub
 from collections import defaultdict
 from libcpp.string cimport string
 from . import _max_len
 
 
+cdef gopen(infile):
+    if infile.endswith('.gz'):
+        return gzip.open(infile)
+    return open(infile, 'rb')
+
+
 cdef large_file(infile):
     """ Check if file is greater than _max_len """
     cdef int len = 0
-    with open(infile) as f:
+    with gopen(infile) as f:
         for line in f:
             len = len + 1
             if len > _max_len:
@@ -117,6 +124,9 @@ class BedFile():
         """ Initialize sqlite3 object """
         sys.stderr.write('INFO --> Bedfile is large, using sqlite\n')
         db_name = bedfile + '.db'
+        if bedfile.endswith('.gz'):
+            alt_path = '.'.join(bedfile.split('.')[:-1]) + '.db'
+
         if os.path.exists(db_name):
             sys.stderr.write('INFO --> Using existing db, if this is ' +
                              'not what you want, delete ' + db_name + '\n')
@@ -130,9 +140,9 @@ class BedFile():
         self._conn = sqlite3.connect(db_name)
         self._c = self._conn.cursor()
 
-        with open(bedfile) as infile:
+        with gopen(bedfile) as infile:
             for line in infile:
-                f = line.rstrip().split('\t')
+                f = line.decode().rstrip().split('\t')
                 if len(f) < 4:
                     continue
                 # Check if db exists and create if it does
@@ -158,9 +168,9 @@ class BedFile():
 
     def _init_dict(self, bedfile):
         self._data = defaultdict(Chrom)
-        with open(bedfile) as infile:
+        with gopen(bedfile) as infile:
             for line in infile:
-                f = line.rstrip().split('\t')
+                f = line.decode().rstrip().split('\t')
                 if len(f) < 4:
                     continue
                 chr   = f[0]
