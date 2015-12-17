@@ -14,7 +14,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='bed_lookup',
-    version='0.9',
+    version='1.0',
     description='Lookup a gene by coordinate from a bed',
     long_description=long_description,
     url='https://github.com/MikeDacre/python_bed_sqlite',
@@ -24,7 +24,7 @@ setup(
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 3 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Science/Research',
         'Environment :: Console',
         'Operating System :: Linux',
