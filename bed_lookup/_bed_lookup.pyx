@@ -12,6 +12,7 @@ from subprocess import check_output as sub
 from collections import defaultdict
 from libcpp.string cimport string
 from . import _max_len
+from os.path import getsize
 
 
 cdef gopen(infile):
@@ -22,13 +23,7 @@ cdef gopen(infile):
 
 cdef large_file(infile):
     """ Check if file is greater than _max_len """
-    cdef int len = 0
-    with gopen(infile) as f:
-        for line in f:
-            len = len + 1
-            if len > _max_len:
-                return True
-        return False
+    return getsize(infile) > _max_len
 
 
 cdef class Gene(object):
