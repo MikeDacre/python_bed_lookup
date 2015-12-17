@@ -10,9 +10,13 @@ import sqlite3
 import gzip
 from subprocess import check_output as sub
 from collections import defaultdict
-from libcpp.string cimport string
-from . import _max_len
 from os.path import getsize
+
+# C++ Library Import
+from libcpp.string cimport string
+
+# Get max len from __init__.py
+from . import _max_len
 
 
 cdef gopen(infile):
@@ -23,7 +27,8 @@ cdef gopen(infile):
 
 cdef large_file(infile):
     """ Check if file is greater than _max_len """
-    return getsize(infile) > _max_len
+    size = getsize(infile)*3.7 if infile.endswith('.gz') else getsize(infile)
+    return size > _max_len
 
 
 cdef class Gene(object):

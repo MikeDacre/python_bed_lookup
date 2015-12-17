@@ -62,11 +62,14 @@ Backend information and customization
 It makes use of a cython optimized dictionary lookup for small bed files
 and sqlite for larger bed files. Which backend is being used is transparent
 to the user, simply use the ``lookup()`` function as demonstrated in the
-example above. The default file size cutoff is 5 million lines in the bed
+example above. The default file size cutoff is ~5 million lines in the bed
 file, which results in a memory use of 1.2GB for a 5 million line long file.
 The memory use scales linearly, so setting the limit at 1 million lines will
 result in about 240MB of memory use. To change the file size cutoff edit the
-``_max_len`` variable in ``bed_lookup/__init__.py``.
+``_max_len`` variable in ``bed_lookup/__init__.py``. Be aware that the file
+size limit is actually measured in bytes, for speed purposes. A dictionary of
+size to file length maps is provided in the ``__init__.py`` file, the default
+should work fine on most systems.
 
 Note that the sqlite backed is very slightly slower for lookups, however the
 sqlite backend requires that a database exists already. If one does not exist
