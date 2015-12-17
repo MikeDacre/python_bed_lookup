@@ -2,8 +2,7 @@
 Python Bed Lookup
 #################
 
-A simple data structure to hold a bed file, allows the user to
-search by location for a gene name.
+Allows very fast searching of a bed file of any size by gene/snp location.
 
 For example::
 
