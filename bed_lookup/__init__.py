@@ -6,7 +6,12 @@
 #  ORGANIZATION: Stanford University                                         #
 #       LICENSE: MIT License, property of Stanford, use as you wish          #
 #       CREATED: 2015-12-13 17:38                                            #
-# Last modified: 2015-12-17 12:09                                            #
+# Last modified: 2015-12-17 12:28                                            #
+#                                                                            #
+#         Usage: This project contains only a single user useful component:  #
+#                BedFile. To use:                                            #
+#                                                                            #
+#                from bed_lookup import BedFile                              #
 #                                                                            #
 #============================================================================#
 """

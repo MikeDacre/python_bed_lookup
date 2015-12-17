@@ -67,7 +67,11 @@ cdef class Chrom(list):
 
 
 class BedFile():
-    """ A Lookup Object """
+    """ An object to hold data from a bed file and allow lookup by coordinate.
+        To use, create a bedfile object with your bedfile:
+            b = BedFile(bedfile)
+        Then search by coordinate:
+            result = b.lookup('chr1', 10003021) """
 
     def lookup(self, chromosome, location):
         """ Lookup your gene. Returns the gene name """
