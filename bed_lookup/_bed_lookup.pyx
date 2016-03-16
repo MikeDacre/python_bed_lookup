@@ -8,6 +8,7 @@ import sys
 import os
 import sqlite3
 import gzip
+import bz2
 from subprocess import check_output as sub
 from collections import defaultdict
 from os.path import getsize
@@ -18,11 +19,26 @@ from libcpp.string cimport string
 # Get max len from __init__.py
 from . import _max_len
 
+import logme
+logme.MIN_LEVEL = 'info'
 
-cdef gopen(infile):
-    if infile.endswith('.gz'):
-        return gzip.open(infile)
-    return open(infile, 'rb')
+
+def gopen(infile, mode='r'):
+    """ Return file handle of file regardless of zipped or not
+        Text mode enforced for compatibility with python2 """
+    mode   = mode[0] + 't'
+    p2mode = mode
+    if hasattr(infile, 'write'):
+        return infile
+    if isinstance(infile, str):
+        if infile.endswith('.gz'):
+            return gzip.open(infile, mode)
+        if infile.endswith('.bz2'):
+            if hasattr(bz2, 'open'):
+                return bz2.open(infile, mode)
+            else:
+                return bz2.BZ2File(infile, p2mode)
+        return open(infile, p2mode)
 
 
 cdef large_file(infile):
@@ -90,10 +106,10 @@ class BedFile():
             self._c.execute(expr)
         except sqlite3.OperationalError as e:
             if str(e).startswith('no such table'):
-                sys.stderr.write(("WARNING --> Chromosome '{}' is not in " +
-                                  "the lookup table, lookup failed." +
-                                  "\n").format(chromosome))
-                return ''
+                logme.log(("WARNING --> Chromosome '{}' is not in " +
+                           "the lookup table, lookup failed." +
+                           "\n").format(chromosome), level='error')
+                return None
             else:
                 raise(e)
 
@@ -101,10 +117,10 @@ class BedFile():
         if answer:
             return answer[0]
         else:
-            sys.stderr.write(("WARNING --> Location '{}' on Chromosome '{}' " +
-                              "is not in the lookup table, lookup failed." +
-                              "\n").format(location, chromosome))
-            return ''
+            logme.log(("WARNING --> Location '{}' on Chromosome '{}' " +
+                       "is not in the lookup table, lookup failed." +
+                       "\n").format(location, chromosome), level='debug')
+            return None
 
     def _lookup_dict(self, chromosome, location):
         """ Simple dictionary query with cython for math """
@@ -115,19 +131,19 @@ class BedFile():
             if ans:
                 return ans
             else:
-                sys.stderr.write(("WARNING --> Location '{}' on Chromosome '{}' " +
-                                  "is not in the lookup table, lookup failed." +
-                                  "\n").format(location, chromosome))
-                return ''
+                logme.log(("WARNING --> Location '{}' on Chromosome '{}' " +
+                           "is not in the lookup table, lookup failed." +
+                           "\n").format(location, chromosome), level='error')
+                return None
         else:
-            sys.stderr.write(("WARNING --> Chromosome '{}' is not in " +
-                              "the lookup table, lookup failed." +
-                              "\n").format(chromosome))
-            return ''
+            logme.log(("WARNING --> Chromosome '{}' is not in " +
+                       "the lookup table, lookup failed." +
+                       "\n").format(chromosome), level='debug')
+            return None
 
     def _init_sqlite(self, bedfile):
         """ Initialize sqlite3 object """
-        sys.stderr.write('INFO --> Bedfile is large, using sqlite\n')
+        logme.log('Bedfile is large, using sqlite\n', level='info')
         db_name = bedfile if bedfile.endswith('.db') else bedfile + '.db'
         # Check if the alternate db exists if db doesn't exist
         if not os.path.exists(db_name):
@@ -145,21 +161,22 @@ class BedFile():
 
         # If the database already exists, use it
         if exists:
-            sys.stderr.write('INFO --> Using existing db, if this is ' +
-                             'not what you want, delete ' + db_name + '\n')
+            logme.log('Using existing db, if this is ' +
+                      'not what you want, delete ' + db_name + '\n',
+                      level='info')
             self._conn = sqlite3.connect(db_name)
             self._c = self._conn.cursor()
             return
 
         # Create an sqlite database from bed file
-        sys.stderr.write('INFO --> Creating sqlite database, this ' +
-                         'may take a long time.\n')
+        logme.log('Creating sqlite database, this ' +
+                  'may take a long time.\n', level='info')
         self._conn = sqlite3.connect(db_name)
         self._c = self._conn.cursor()
 
         with gopen(bedfile) as infile:
             for line in infile:
-                f = line.decode().rstrip().split('\t')
+                f = line.rstrip().split('\t')
                 if len(f) < 4:
                     continue
                 # Check if db exists and create if it does
@@ -187,7 +204,7 @@ class BedFile():
         self._data = defaultdict(Chrom)
         with gopen(bedfile) as infile:
             for line in infile:
-                f = line.decode().rstrip().split('\t')
+                f = line.rstrip().split('\t')
                 if len(f) < 4:
                     continue
                 chr   = f[0]
