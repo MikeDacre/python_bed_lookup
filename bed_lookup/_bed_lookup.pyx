@@ -133,12 +133,12 @@ class BedFile():
             else:
                 logme.log(("WARNING --> Location '{}' on Chromosome '{}' " +
                            "is not in the lookup table, lookup failed." +
-                           "\n").format(location, chromosome), level='error')
+                           "\n").format(location, chromosome), level='debug')
                 return None
         else:
             logme.log(("WARNING --> Chromosome '{}' is not in " +
                        "the lookup table, lookup failed." +
-                       "\n").format(chromosome), level='debug')
+                       "\n").format(chromosome), level='error')
             return None
 
     def _init_sqlite(self, bedfile):
