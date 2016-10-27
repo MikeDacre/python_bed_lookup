@@ -6,7 +6,7 @@
 #  ORGANIZATION: Stanford University                                         #
 #       LICENSE: MIT License, property of Stanford, use as you wish          #
 #       CREATED: 2015-12-13 17:38                                            #
-# Last modified: 2015-12-17 12:28                                            #
+# Last modified: 2016-10-27 11:13                                            #
 #                                                                            #
 #         Usage: This project contains only a single user useful component:  #
 #                BedFile. To use:                                            #
@@ -15,6 +15,8 @@
 #                                                                            #
 #============================================================================#
 """
+
+__version__ = '1.1'
 
 # Define max length to use dictionary
 _max_len = 180000000  # In bytes, this is approximately 5 million lines
@@ -29,5 +31,6 @@ _max_len = 180000000  # In bytes, this is approximately 5 million lines
 # will tend to be much smaller than the above cutoff anyway, so it should not
 # make much difference.
 
-__all__ = ["_bed_lookup"]
 from ._bed_lookup import BedFile
+
+__all__ = ["BedFile", "_bed_lookup"]

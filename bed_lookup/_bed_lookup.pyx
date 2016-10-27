@@ -134,7 +134,7 @@ class BedFile():
             self._c.execute(expr)
         except sqlite3.OperationalError as e:
             if str(e).startswith('no such table'):
-                logme.log(("WARNING --> Chromosome '{}' is not in " +
+                logme.log(("Chromosome '{}' is not in " +
                            "the lookup table, lookup failed." +
                            "\n").format(chromosome), level='error')
                 return None
@@ -145,7 +145,7 @@ class BedFile():
         if answer:
             return answer[0]
         else:
-            logme.log(("WARNING --> Location '{}' on Chromosome '{}' " +
+            logme.log(("Location '{}' on Chromosome '{}' " +
                        "is not in the lookup table, lookup failed." +
                        "\n").format(location, chromosome), level='debug')
             return None
@@ -159,12 +159,12 @@ class BedFile():
             if ans:
                 return ans
             else:
-                logme.log(("WARNING --> Location '{}' on Chromosome '{}' " +
+                logme.log(("Location '{}' on Chromosome '{}' " +
                            "is not in the lookup table, lookup failed." +
                            "\n").format(location, chromosome), level='debug')
                 return None
         else:
-            logme.log(("WARNING --> Chromosome '{}' is not in " +
+            logme.log(("Chromosome '{}' is not in " +
                        "the lookup table, lookup failed." +
                        "\n").format(chromosome), level='error')
             return None
