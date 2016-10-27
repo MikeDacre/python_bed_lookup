@@ -19,7 +19,7 @@ from libcpp.string cimport string
 # Get max len from __init__.py
 from . import _max_len
 
-import logme
+from . import logme
 logme.MIN_LEVEL = 'info'
 
 
@@ -95,6 +95,34 @@ class BedFile():
             return self._lookup_sqlite(chromosome, str(location))
         elif self._type == 'dt':
             return self._lookup_dict(chromosome, location)
+
+    def lookup_df(self, df, chrom_col, pos_col):
+        """Use a pandas dataframe and return a series with the same index.
+
+        Args:
+            df (DataFrame):  A pandas dataframe
+            chrom_col (str): The name of the column with the chromosome name
+            pos_col (str):   The name of the column with the position
+
+        Returns:
+            Series: A pandas series with the same index as the original df.
+        """
+        return df.apply(self.lookup_series, args=(chrom_col, pos_col), axis=1)
+
+    def lookup_series(self, series, chrom_col, pos_col):
+        """To use with pandas DataFrame.apply().
+
+        Note: you need to specify `axis=1` when using with df.apply().
+
+        Args:
+            series (Series): A pandas series from df.apply
+            chrom_col (str): The name of the column with the chromosome name
+            pos_col (str):   The name of the column with the position
+
+        Returns:
+            Series: A pandas series with the same index as the original df.
+        """
+        return self.lookup(series[chrom_col], series[pos_col])
 
     # Private functions
     def _lookup_sqlite(self, chromosome, location):

@@ -4,7 +4,9 @@ Python Bed Lookup
 
 Allows very fast searching of a bed file of any size by gene/snp location.
 
-For example::
+For example:
+
+.. code:: python
 
     from bed_lookup import BedFile
     b = BedFile('my_bed.bed')
@@ -13,11 +15,41 @@ For example::
 This module requires cython, and should work with recent versions of
 python2 and python3.
 
+It can also be used with a pandas dataframe directly:
+
+.. code:: python
+
+   df['new_col'] = b.lookup_df(df, 'chrom', 'pos')
+
+Note: with large dataframes, this function can be very slow, but there is
+a nice trick to speed it up:
+
+.. code:: python
+
+   import numpy as np
+   import pandas as pd
+   from multiprocessing import Pool, cpu_count
+   pool = Pool()
+   b    = BedFile('my_bed.bed')
+   df   = pd.read_csv('big_table.txt.gz', sep='\t', compression='gzip')
+   dfs  = np.array_split(df, cpu_count())
+   run  = []
+   out  = []
+   # Our chromsome column is 'chrom' and position column is 'pos'.
+   for d in dfs:
+       run.append(pool.apply_async(b.lookup_df, (d, 'chrom', 'pos')))
+   for r in run:
+       out.append(r.get())
+   df['new_col'] = pd.concat(out)
+
+
 ************
 Installation
 ************
 
-Installation follows the standard python syntax::
+Installation follows the standard python syntax:
+
+.. code:: shell
 
     git clone https://github.com/MikeDacre/python_bed_lookup
     cd python_bed_lookup
